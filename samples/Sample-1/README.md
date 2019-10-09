@@ -1,0 +1,1 @@
+Please check the documentation on the wiki for the step-by-step instructions for this sample: https://github.com/mcneel/Rhino.Inside-Workshop/wiki/Sample-1
