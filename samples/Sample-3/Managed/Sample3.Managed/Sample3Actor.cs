@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnrealEngine.Runtime;
 using UnrealEngine.Engine;
 using Rhino.Runtime.InProcess;
@@ -10,11 +5,11 @@ using Rhino.Runtime.InProcess;
 namespace Sample3
 {
   [UClass, BlueprintType, Blueprintable]
-  class ASample3GameMode : AGameMode
+  class ASample3Actor : AActor
   {
     static RhinoCore rhinoCore;
 
-    static ASample3GameMode()
+    static ASample3Actor()
     {
       RhinoInside.Resolver.Initialize();
     }
@@ -22,7 +17,7 @@ namespace Sample3
     public override void Initialize(FObjectInitializer initializer)
     {
       base.Initialize(initializer);
-      if(rhinoCore==null)
+      if (rhinoCore == null)
         rhinoCore = new Rhino.Runtime.InProcess.RhinoCore();
     }
 
@@ -35,13 +30,14 @@ namespace Sample3
       DoSomething();
 
     }
-
+    public Rhino.Geometry.Mesh mesh;
     public void DoSomething()
     {
       try
       {
         var sphere = new Rhino.Geometry.Sphere(Rhino.Geometry.Point3d.Origin, 10);
-        var mesh = Rhino.Geometry.Mesh.CreateFromSphere(sphere, 10, 10);
+        mesh = Rhino.Geometry.Mesh.CreateFromSphere(sphere, 10, 10);
+        mesh.Faces.ConvertQuadsToTriangles();
 
         FMessage.Log(ELogVerbosity.Warning, "Created a mesh with " + mesh.Vertices.Count.ToString() + " vertices and " + mesh.Vertices.Count.ToString() + " Faces.");
       }

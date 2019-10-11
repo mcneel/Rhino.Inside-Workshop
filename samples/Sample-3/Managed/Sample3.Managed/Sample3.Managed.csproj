@@ -34,7 +34,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Sample3GameMode.cs" />
+    <Compile Include="Sample3Actor.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Rhino.Inside">
