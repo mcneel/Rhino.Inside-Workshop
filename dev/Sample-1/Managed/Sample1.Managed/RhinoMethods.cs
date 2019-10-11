@@ -23,41 +23,7 @@ namespace Sample1
 
     static RhinoMethods()
     {
-
-      FMessage.Log(ELogVerbosity.Warning, "Hello from C# (Sample1.RhinoMethods:Static Constructor)");
-
-      // Resolve RhinoCommon assembly reference
-      ResolveEventHandler OnRhinoCommonResolve = null;
-      AppDomain.CurrentDomain.AssemblyResolve += OnRhinoCommonResolve = (sender, args) =>
-      {
-        const string rhino_common_assembly_name = "RhinoCommon";
-        var assembly_name = new AssemblyName(args.Name).Name;
-
-        if (assembly_name != rhino_common_assembly_name)
-          return null;
-
-        AppDomain.CurrentDomain.AssemblyResolve -= OnRhinoCommonResolve;
-
-        var rhino_system_dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Rhino WIP", "System");
-        return Assembly.LoadFrom(Path.Combine(rhino_system_dir, rhino_common_assembly_name + ".dll"));
-      };
-
-      ResolveEventHandler OnGHResolve = null;
-      AppDomain.CurrentDomain.AssemblyResolve += OnGHResolve = (sender, args) =>
-      {
-        const string gh_assembly_name = "Grasshopper";
-        var assembly_name = new AssemblyName(args.Name).Name;
-
-        if (assembly_name != gh_assembly_name)
-          return null;
-
-        AppDomain.CurrentDomain.AssemblyResolve -= OnGHResolve;
-
-        var gh_plugin_dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Rhino WIP", "Plug-ins", "Grasshopper");
-        return Assembly.LoadFrom(Path.Combine(gh_plugin_dir, gh_assembly_name + ".dll"));
-      };
-
-
+      RhinoInside.Resolver.Initialize();
     }
 
     public static void LaunchRhino()
