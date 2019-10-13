@@ -14,7 +14,6 @@ namespace Sample4
     static readonly Guid GrasshopperGuid = new Guid(0xB45A29B1, 0x4343, 0x4035, 0x98, 0x9E, 0x04, 0x4E, 0x85, 0x80, 0xD9, 0xCF);
     GH_Document definition;
 
-
     static ASample4Actor()
     {
       RhinoInside.Resolver.Initialize();
