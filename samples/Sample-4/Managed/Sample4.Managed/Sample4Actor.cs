@@ -5,6 +5,7 @@ using Rhino.Runtime.InProcess;
 using Grasshopper.GUI.Canvas;
 using Rhino.PlugIns;
 using Grasshopper.Kernel;
+using System.Linq;
 
 namespace Sample4
 {
@@ -66,6 +67,68 @@ namespace Sample4
     private static void Definition_SolutionEnd(object sender, GH_SolutionEventArgs e)
     {
       FMessage.Log(ELogVerbosity.Warning, "Solution End");
+    }
+
+    Rhino.Geometry.Mesh GetDocumentPreview(GH_Document document)
+    {
+      var meshPreview = new Rhino.Geometry.Mesh();
+
+      foreach (var obj in document.Objects.OfType<IGH_ActiveObject>())
+      {
+        if (obj.Locked)
+          continue;
+
+        if (obj is IGH_PreviewObject previewObject)
+        {
+          if (previewObject.IsPreviewCapable)
+          {
+            if (obj is IGH_Component component)
+            {
+              if (!component.Hidden)
+                foreach (var param in component.Params.Output)
+                  foreach (var value in param.VolatileData.AllData(true))
+                  {
+                    if (value is IGH_PreviewData)
+                    {
+                      switch (value.ScriptVariable())
+                      {
+                        case Rhino.Geometry.Mesh mesh:
+                          meshPreview.Append(mesh);
+                          break;
+                        case Rhino.Geometry.Brep brep:
+                          var previewMesh = new Rhino.Geometry.Mesh();
+                          previewMesh.Append(Rhino.Geometry.Mesh.CreateFromBrep(brep, Rhino.Geometry.MeshingParameters.Default));
+                          meshPreview.Append(previewMesh);
+                          break;
+                      }
+                    }
+                  }
+            }
+            else if (obj is IGH_Param param)
+            {
+              foreach (var value in param.VolatileData.AllData(true))
+              {
+                if (value is IGH_PreviewData)
+                {
+                  switch (value.ScriptVariable())
+                  {
+                    case Rhino.Geometry.Mesh mesh:
+                      meshPreview.Append(mesh);
+                      break;
+                    case Rhino.Geometry.Brep brep:
+                      var previewMesh = new Rhino.Geometry.Mesh();
+                      previewMesh.Append(Rhino.Geometry.Mesh.CreateFromBrep(brep, Rhino.Geometry.MeshingParameters.Default));
+                      meshPreview.Append(previewMesh);
+                      break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return meshPreview;
     }
   }
 }
