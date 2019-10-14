@@ -3,6 +3,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <StartAction>Program</StartAction>
     <StartProgram>C:\Program Files\Epic Games\UE_4.23\Engine\Binaries\Win64\UE4Editor.exe</StartProgram>
-    <StartArguments>"C:\dev\Rhino.Inside-Workshop\samples\Sample-3\Sample3.uproject"</StartArguments>
+    <StartArguments>"C:\dev\Rhino.Inside-Workshop\samples\Sample-4\Sample4.uproject"</StartArguments>
   </PropertyGroup>
 </Project>
