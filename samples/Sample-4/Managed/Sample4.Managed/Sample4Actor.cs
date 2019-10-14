@@ -1,8 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnrealEngine.Runtime;
 using UnrealEngine.Engine;
 using Rhino.Runtime.InProcess;
@@ -29,22 +25,30 @@ namespace Sample4
     {
       base.BeginPlay();
 
-      FMessage.Log(ELogVerbosity.Warning, "Hello from C# (" + this.GetType().ToString() + ":BeginPlay)");
+      FMessage.Log(ELogVerbosity.Warning, "Hello from C# (" + this.GetType().ToString() + ":BeginPlay)"); 
+    }
 
+    [UFunction, BlueprintCallable]
+    public void LaunchRhino()
+    {
       if (rhinoCore == null)
         rhinoCore = new RhinoCore(new string[] { "/NOSPLASH" }, WindowStyle.Hidden);
     }
 
     [UFunction, BlueprintCallable]
-    public static void LaunchGrasshopper()
+    public void LaunchGrasshopper()
     {
       if (!PlugIn.LoadPlugIn(GrasshopperGuid))
         return;
 
       Grasshopper.Instances.CanvasCreated += Instances_CanvasCreated;
+      Rhino.RhinoApp.RunScript("!_-Grasshopper _W _T ENTER", false);
+    }
 
-      var ghInit = Rhino.RhinoApp.RunScript("!_-Grasshopper _W _T ENTER", false) ? true : false;
-
+    [UFunction, BlueprintCallable]
+    public void ToggleGrasshopper()
+    {
+      Rhino.RhinoApp.RunScript("!_-Grasshopper _W _T ENTER", false);
     }
 
     private static void Instances_CanvasCreated(GH_Canvas canvas)
@@ -61,8 +65,6 @@ namespace Sample4
 
     private static void Definition_SolutionEnd(object sender, GH_SolutionEventArgs e)
     {
-      // TODO
-
       FMessage.Log(ELogVerbosity.Warning, "Solution End");
     }
   }
