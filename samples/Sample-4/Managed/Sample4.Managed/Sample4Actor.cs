@@ -6,6 +6,7 @@ using Grasshopper.GUI.Canvas;
 using Rhino.PlugIns;
 using Grasshopper.Kernel;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace Sample4
 {
@@ -16,6 +17,12 @@ namespace Sample4
     static RhinoCore rhinoCore;
     static readonly Guid GrasshopperGuid = new Guid(0xB45A29B1, 0x4343, 0x4035, 0x98, 0x9E, 0x04, 0x4E, 0x85, 0x80, 0xD9, 0xCF);
     static GH_Document definition;
+
+    [UProperty, EditAnywhere, BlueprintReadWrite]
+    public static IList<FVector> VertList => null;
+
+    [UProperty, EditAnywhere, BlueprintReadWrite]
+    public static IList<int> FaceIDList => null;
 
     static ASample4Actor()
     {
@@ -67,11 +74,55 @@ namespace Sample4
     private static void Definition_SolutionEnd(object sender, GH_SolutionEventArgs e)
     {
       FMessage.Log(ELogVerbosity.Warning, "Solution End");
+
+      var mesh = GetDocumentPreview(definition);
+
+      if (mesh == null)
+        return;
+
+      mesh.Faces.ConvertQuadsToTriangles();
+      mesh.Flip(true, true, true);
+
+      VertList.Clear();
+      foreach (var vert in mesh.Vertices)
+        VertList.Add(new FVector(vert.X, vert.Y, vert.Z));
+
+      FaceIDList.Clear();
+      foreach (var face in mesh.Faces)
+      {
+        FaceIDList.Add(face.A);
+        FaceIDList.Add(face.B);
+        FaceIDList.Add(face.C);
+      }
+
     }
 
-    Rhino.Geometry.Mesh GetDocumentPreview(GH_Document document)
+    public void GetMesh()
+    {
+      
+    }
+
+    [UFunction, BlueprintCallable]
+    public IList<FVector> GetVertices()
+    {
+      if (VertList != null)
+        return VertList;
+      return null;
+    }
+
+    [UFunction, BlueprintCallable]
+    public IList<int> GetFaceIds()
+    {
+      if (FaceIDList != null)
+        return FaceIDList;
+      return null;
+    }
+
+    static Rhino.Geometry.Mesh GetDocumentPreview(GH_Document document)
     {
       var meshPreview = new Rhino.Geometry.Mesh();
+
+      var meshes = new List<Rhino.Geometry.Mesh>();
 
       foreach (var obj in document.Objects.OfType<IGH_ActiveObject>())
       {
@@ -93,12 +144,14 @@ namespace Sample4
                       switch (value.ScriptVariable())
                       {
                         case Rhino.Geometry.Mesh mesh:
-                          meshPreview.Append(mesh);
+                          //meshPreview.Append(mesh);
+                          meshes.Add(mesh);
                           break;
                         case Rhino.Geometry.Brep brep:
                           var previewMesh = new Rhino.Geometry.Mesh();
                           previewMesh.Append(Rhino.Geometry.Mesh.CreateFromBrep(brep, Rhino.Geometry.MeshingParameters.Default));
-                          meshPreview.Append(previewMesh);
+                          //meshPreview.Append(previewMesh);
+                          meshes.Add(previewMesh);
                           break;
                       }
                     }
@@ -113,12 +166,13 @@ namespace Sample4
                   switch (value.ScriptVariable())
                   {
                     case Rhino.Geometry.Mesh mesh:
-                      meshPreview.Append(mesh);
+                      meshes.Add(mesh);
                       break;
                     case Rhino.Geometry.Brep brep:
                       var previewMesh = new Rhino.Geometry.Mesh();
                       previewMesh.Append(Rhino.Geometry.Mesh.CreateFromBrep(brep, Rhino.Geometry.MeshingParameters.Default));
-                      meshPreview.Append(previewMesh);
+                      //meshPreview.Append(previewMesh);
+                      meshes.Add(previewMesh);
                       break;
                   }
                 }
@@ -128,7 +182,12 @@ namespace Sample4
         }
       }
 
-      return meshPreview;
+      if (meshes.Count > 0)
+      {
+        meshPreview.Append(meshes);
+        return meshPreview;
+      }
+      else return null;
     }
   }
 }
