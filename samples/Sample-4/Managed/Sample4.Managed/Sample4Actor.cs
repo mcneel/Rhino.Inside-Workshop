@@ -19,15 +19,6 @@ namespace Sample4
     static GH_Document definition;
     static Rhino.Geometry.Mesh mesh;
 
-    [UProperty, EditAnywhere, BlueprintReadWrite]
-    public IList<FVector> VertList => null;
-
-    [UProperty, EditAnywhere, BlueprintReadWrite]
-    public IList<int> FaceIDList => null;
-
-    [UProperty, EditAnywhere, BlueprintReadWrite]
-    public IList<FColor> VertexColors => null;
-
     static ASample4Actor()
     {
       RhinoInside.Resolver.Initialize();
@@ -37,7 +28,7 @@ namespace Sample4
     {
       base.BeginPlay();
 
-      FMessage.Log(ELogVerbosity.Warning, "Hello from C# (" + this.GetType().ToString() + ":BeginPlay)"); 
+      FMessage.Log(ELogVerbosity.Warning, "Hello from C# (" + this.GetType().ToString() + ":BeginPlay)");
     }
 
     [UFunction, BlueprintCallable]
@@ -56,12 +47,12 @@ namespace Sample4
 
       var script = new Grasshopper.Plugin.GH_RhinoScriptInterface();
 
-      if(!script.IsEditorLoaded())
+      if (!script.IsEditorLoaded())
         script.LoadEditor();
 
       script.ShowEditor();
 
-      if(definition == null)
+      if (definition == null)
         Grasshopper.Instances.DocumentServer.DocumentAdded += DocumentServer_DocumentAdded;
       //Rhino.RhinoApp.RunScript("!_-Grasshopper _W _T ENTER", false);
     }
@@ -92,42 +83,44 @@ namespace Sample4
       mesh.Faces.ConvertQuadsToTriangles();
       mesh.Flip(true, true, true);
 
-      VertList.Clear();
-      foreach (var vert in mesh.Vertices)
-        VertList.Add(new FVector(vert.X, vert.Y, vert.Z));
+    }
 
-      FaceIDList.Clear();
+    [UFunction, BlueprintCallable]
+    public List<FVector> GetVertices()
+    {
+      var list = new List<FVector>();
+      foreach (var vert in mesh.Vertices)
+        list.Add(new FVector(vert.X, vert.Y, vert.Z));
+      return list;
+    }
+
+    [UFunction, BlueprintCallable]
+    public List<int> GetFaceIds()
+    {
+      var list = new List<int>();
       foreach (var face in mesh.Faces)
       {
-        FaceIDList.Add(face.A);
-        FaceIDList.Add(face.B);
-        FaceIDList.Add(face.C);
+        list.Add(face.A);
+        list.Add(face.B);
+        list.Add(face.C);
       }
-
-      VertexColors.Clear();
-      foreach(var color in mesh.VertexColors)
-      {
-        VertexColors.Add(new FColor(color.R, color.G, color.B));
-      }
-
+      return list;
     }
 
     [UFunction, BlueprintCallable]
-    public IList<FVector> GetVertices()
+    public void GetLocation(FVector vector)
     {
-        return VertList;
+      FMessage.Log(ELogVerbosity.Warning, "X:" +vector.X+" Y:"+vector.Y+" Z:" +vector.Z);
     }
 
     [UFunction, BlueprintCallable]
-    public IList<int> GetFaceIds()
+    public List<FLinearColor> GetVertexColors()
     {
-        return FaceIDList;
-    }
+      var list = new List<FLinearColor>();
+      foreach (var color in mesh.VertexColors)
+        list.Add(new FLinearColor(color.R, color.G, color.B));
 
-    [UFunction, BlueprintCallable]
-    public IList<FColor> GetVertexColors()
-    {
-      return VertexColors;
+      return list;
     }
 
     Rhino.Geometry.Mesh GetDocumentPreview(GH_Document document)
