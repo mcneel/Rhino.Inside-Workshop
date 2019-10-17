@@ -9,7 +9,7 @@ namespace Sample3
   class ASample3Actor : AActor
   {
     static RhinoCore rhinoCore;
-    Rhino.Geometry.Mesh mesh;
+    static Rhino.Geometry.Mesh mesh;
 
     static ASample3Actor()
     {
