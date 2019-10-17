@@ -17,12 +17,16 @@ namespace Sample4
     static RhinoCore rhinoCore;
     static readonly Guid GrasshopperGuid = new Guid(0xB45A29B1, 0x4343, 0x4035, 0x98, 0x9E, 0x04, 0x4E, 0x85, 0x80, 0xD9, 0xCF);
     static GH_Document definition;
+    static Rhino.Geometry.Mesh mesh;
 
     [UProperty, EditAnywhere, BlueprintReadWrite]
-    public static IList<FVector> VertList => null;
+    public IList<FVector> VertList => null;
 
     [UProperty, EditAnywhere, BlueprintReadWrite]
-    public static IList<int> FaceIDList => null;
+    public IList<int> FaceIDList => null;
+
+    [UProperty, EditAnywhere, BlueprintReadWrite]
+    public IList<FColor> VertexColors => null;
 
     static ASample4Actor()
     {
@@ -37,45 +41,50 @@ namespace Sample4
     }
 
     [UFunction, BlueprintCallable]
-    public void LaunchRhino()
+    public void LoadRhino()
     {
       if (rhinoCore == null)
         rhinoCore = new RhinoCore(new string[] { "/NOSPLASH" }, WindowStyle.Hidden);
+
     }
 
     [UFunction, BlueprintCallable]
-    public void LaunchGrasshopper()
+    public void LoadGH()
     {
       if (!PlugIn.LoadPlugIn(GrasshopperGuid))
         return;
 
-      Grasshopper.Instances.CanvasCreated += Instances_CanvasCreated;
-      Rhino.RhinoApp.RunScript("!_-Grasshopper _W _T ENTER", false);
+      var script = new Grasshopper.Plugin.GH_RhinoScriptInterface();
+
+      if(!script.IsEditorLoaded())
+        script.LoadEditor();
+
+      script.ShowEditor();
+
+      if(definition == null)
+        Grasshopper.Instances.DocumentServer.DocumentAdded += DocumentServer_DocumentAdded;
+      //Rhino.RhinoApp.RunScript("!_-Grasshopper _W _T ENTER", false);
     }
 
     [UFunction, BlueprintCallable]
-    public void ToggleGrasshopper()
+    public void Unload()
     {
-      Rhino.RhinoApp.RunScript("!_-Grasshopper _W _T ENTER", false);
+      definition.SolutionEnd -= Definition_SolutionEnd;
     }
 
-    private static void Instances_CanvasCreated(GH_Canvas canvas)
+    private void DocumentServer_DocumentAdded(GH_DocumentServer sender, GH_Document doc)
     {
-      Grasshopper.Instances.ActiveCanvas.DocumentChanged += ActiveCanvas_DocumentChanged;
+      doc.SolutionEnd += Definition_SolutionEnd;
+      definition = doc;
     }
 
-    private static void ActiveCanvas_DocumentChanged(GH_Canvas sender, GH_CanvasDocumentChangedEventArgs e)
-    {
-      definition = e.NewDocument;
-      definition.SolutionEnd += Definition_SolutionEnd;
-      FMessage.Log(ELogVerbosity.Warning, "Document Changed");
-    }
-
-    private static void Definition_SolutionEnd(object sender, GH_SolutionEventArgs e)
+    private void Definition_SolutionEnd(object sender, GH_SolutionEventArgs e)
     {
       FMessage.Log(ELogVerbosity.Warning, "Solution End");
+      if (definition != e.Document)
+        return;
 
-      var mesh = GetDocumentPreview(definition);
+      mesh = GetDocumentPreview(e.Document);
 
       if (mesh == null)
         return;
@@ -95,30 +104,33 @@ namespace Sample4
         FaceIDList.Add(face.C);
       }
 
-    }
+      VertexColors.Clear();
+      foreach(var color in mesh.VertexColors)
+      {
+        VertexColors.Add(new FColor(color.R, color.G, color.B));
+      }
 
-    public void GetMesh()
-    {
-      
     }
 
     [UFunction, BlueprintCallable]
     public IList<FVector> GetVertices()
     {
-      if (VertList != null)
         return VertList;
-      return null;
     }
 
     [UFunction, BlueprintCallable]
     public IList<int> GetFaceIds()
     {
-      if (FaceIDList != null)
         return FaceIDList;
-      return null;
     }
 
-    static Rhino.Geometry.Mesh GetDocumentPreview(GH_Document document)
+    [UFunction, BlueprintCallable]
+    public IList<FColor> GetVertexColors()
+    {
+      return VertexColors;
+    }
+
+    Rhino.Geometry.Mesh GetDocumentPreview(GH_Document document)
     {
       var meshPreview = new Rhino.Geometry.Mesh();
 
@@ -137,46 +149,11 @@ namespace Sample4
             {
               if (!component.Hidden)
                 foreach (var param in component.Params.Output)
-                  foreach (var value in param.VolatileData.AllData(true))
-                  {
-                    if (value is IGH_PreviewData)
-                    {
-                      switch (value.ScriptVariable())
-                      {
-                        case Rhino.Geometry.Mesh mesh:
-                          //meshPreview.Append(mesh);
-                          meshes.Add(mesh);
-                          break;
-                        case Rhino.Geometry.Brep brep:
-                          var previewMesh = new Rhino.Geometry.Mesh();
-                          previewMesh.Append(Rhino.Geometry.Mesh.CreateFromBrep(brep, Rhino.Geometry.MeshingParameters.Default));
-                          //meshPreview.Append(previewMesh);
-                          meshes.Add(previewMesh);
-                          break;
-                      }
-                    }
-                  }
+                  meshes.AddRange(GetParamMeshes(param));
             }
             else if (obj is IGH_Param param)
             {
-              foreach (var value in param.VolatileData.AllData(true))
-              {
-                if (value is IGH_PreviewData)
-                {
-                  switch (value.ScriptVariable())
-                  {
-                    case Rhino.Geometry.Mesh mesh:
-                      meshes.Add(mesh);
-                      break;
-                    case Rhino.Geometry.Brep brep:
-                      var previewMesh = new Rhino.Geometry.Mesh();
-                      previewMesh.Append(Rhino.Geometry.Mesh.CreateFromBrep(brep, Rhino.Geometry.MeshingParameters.Default));
-                      //meshPreview.Append(previewMesh);
-                      meshes.Add(previewMesh);
-                      break;
-                  }
-                }
-              }
+              meshes.AddRange(GetParamMeshes(param));
             }
           }
         }
@@ -189,5 +166,29 @@ namespace Sample4
       }
       else return null;
     }
+
+    public List<Rhino.Geometry.Mesh> GetParamMeshes(IGH_Param param)
+    {
+      var meshes = new List<Rhino.Geometry.Mesh>();
+      foreach (var value in param.VolatileData.AllData(true))
+      {
+        if (value is IGH_PreviewData)
+        {
+          switch (value.ScriptVariable())
+          {
+            case Rhino.Geometry.Mesh mesh:
+              meshes.Add(mesh);
+              break;
+            case Rhino.Geometry.Brep brep:
+              var previewMesh = new Rhino.Geometry.Mesh();
+              previewMesh.Append(Rhino.Geometry.Mesh.CreateFromBrep(brep, Rhino.Geometry.MeshingParameters.Default));
+              meshes.Add(previewMesh);
+              break;
+          }
+        }
+      }
+      return meshes;
+    }
+
   }
 }
