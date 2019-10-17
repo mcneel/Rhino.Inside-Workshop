@@ -9,12 +9,7 @@ namespace Sample3
   class ASample3Actor : AActor
   {
     static RhinoCore rhinoCore;
-
-    [UProperty, EditAnywhere, BlueprintReadWrite]
-    public IList<FVector> VertList => null;
-
-    [UProperty, EditAnywhere, BlueprintReadWrite]
-    public IList<int> FaceIDList => null;
+    static Rhino.Geometry.Mesh mesh;
 
     static ASample3Actor()
     {
@@ -40,39 +35,33 @@ namespace Sample3
     public void DoSomething()
     {
       var sphere = new Rhino.Geometry.Sphere(Rhino.Geometry.Point3d.Origin, 10);
-      var mesh = Rhino.Geometry.Mesh.CreateFromSphere(sphere, 10, 10);
+      mesh = Rhino.Geometry.Mesh.CreateFromSphere(sphere, 10, 10);
       mesh.Faces.ConvertQuadsToTriangles();
       mesh.Flip(true, true, true);
-
-      VertList.Clear();
-      foreach (var vert in mesh.Vertices)
-        VertList.Add(new FVector(vert.X, vert.Y, vert.Z));
-
-      FaceIDList.Clear();
-      foreach (var face in mesh.Faces)
-      {
-        FaceIDList.Add(face.A);
-        FaceIDList.Add(face.B);
-        FaceIDList.Add(face.C);
-      }
 
       FMessage.Log(ELogVerbosity.Warning, "Created a mesh with " + mesh.Vertices.Count.ToString() + " vertices and " + mesh.Vertices.Count.ToString() + " Faces.");
     }
 
     [UFunction, BlueprintCallable]
-    public IList<FVector> GetVertices()
+    public List<FVector> GetVertices()
     {
-      if (VertList != null)
-        return VertList;
-      return null;
+      var list = new List<FVector>();
+      foreach (var vert in mesh.Vertices)
+        list.Add(new FVector(vert.X, vert.Y, vert.Z));
+      return list;
     }
 
     [UFunction, BlueprintCallable]
-    public IList<int> GetFaceIds()
+    public List<int> GetFaceIds()
     {
-      if (FaceIDList != null)
-        return FaceIDList;
-      return null;
+      var list = new List<int>();
+      foreach (var face in mesh.Faces)
+      {
+        list.Add(face.A);
+        list.Add(face.B);
+        list.Add(face.C);
+      }
+      return list;
     }
 
 
