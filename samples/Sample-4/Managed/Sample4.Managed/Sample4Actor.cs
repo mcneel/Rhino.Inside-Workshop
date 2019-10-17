@@ -113,16 +113,6 @@ namespace Sample4
       FMessage.Log(ELogVerbosity.Warning, "X:" +vector.X+" Y:"+vector.Y+" Z:" +vector.Z);
     }
 
-    [UFunction, BlueprintCallable]
-    public List<FLinearColor> GetVertexColors()
-    {
-      var list = new List<FLinearColor>();
-      foreach (var color in mesh.VertexColors)
-        list.Add(new FLinearColor(color.R, color.G, color.B));
-
-      return list;
-    }
-
     Rhino.Geometry.Mesh GetDocumentPreview(GH_Document document)
     {
       var meshPreview = new Rhino.Geometry.Mesh();
