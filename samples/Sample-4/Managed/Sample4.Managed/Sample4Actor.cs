@@ -54,13 +54,6 @@ namespace Sample4
 
       if (definition == null)
         Grasshopper.Instances.DocumentServer.DocumentAdded += DocumentServer_DocumentAdded;
-      //Rhino.RhinoApp.RunScript("!_-Grasshopper _W _T ENTER", false);
-    }
-
-    [UFunction, BlueprintCallable]
-    public void Unload()
-    {
-      definition.SolutionEnd -= Definition_SolutionEnd;
     }
 
     private void DocumentServer_DocumentAdded(GH_DocumentServer sender, GH_Document doc)
