@@ -3,6 +3,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <StartAction>Program</StartAction>
     <StartProgram>C:\Program Files\Epic Games\UE_4.23\Engine\Binaries\Win64\UE4Editor.exe</StartProgram>
-    <StartArguments>"$(SolutionDir)..\Sample-3\Sample3.uproject"</StartArguments>
+    <StartArguments>"$(SolutionDir)..\Sample3.uproject"</StartArguments>
   </PropertyGroup>
 </Project>
